@@ -1,7 +1,0 @@
-fastapi
-uvicorn
-boto3
-faiss-cpu
-numpy
-pydantic
-python-dotenv
