@@ -1,196 +1,269 @@
-# FinSight RAG — Financial Intelligence Assistant (FastAPI)
+# 📊 Earnings Call Analyzer
 
-FinSight RAG is a Retrieval-Augmented Generation (RAG) system designed to analyze and answer questions from financial documents such as annual reports, balance sheets, and filings.
+### Temporal RAG for Financial Narrative Intelligence
 
-It uses semantic search and large language models to generate accurate, context-aware financial insights grounded in real data.
+A production-style Retrieval-Augmented Generation (RAG) system that analyzes **earnings call transcripts across multiple quarters** to surface **trend shifts, sentiment changes, and evolving management narratives**.
 
----
-
-## 🚀 Features
-
-* 📄 Upload and process financial documents (PDF, CSV)
-* 🔍 Semantic search using vector embeddings
-* 💬 Natural language querying of financial data
-* 📌 Context-aware responses with source attribution
-* ⚡ Fast retrieval using FAISS
-* 🧠 LLM-powered insights (AWS Bedrock - Claude)
-* 🔗 Interactive interface connected via API
+> Not “what does this document say?”
+> → **“How has the story changed over time?”**
 
 ---
 
-## 🧩 System Architecture
+## 🚀 Why This Exists
 
-```id="y7kq2c"
-User → Client Interface → FastAPI → RAG Pipeline → Response
+Earnings call transcripts are:
+
+* Long (50–80 pages)
+* Dense and repetitive
+* Distributed across quarters
+
+Comparing them manually is slow and inconsistent.
+
+This system:
+
+* Structures transcripts into analyzable data
+* Retrieves context **across time**
+* Generates **comparative insights**, not summaries
+
+---
+
+## 🧠 Core Idea
+
+**Temporal RAG** — extend standard RAG with time-aware retrieval.
+
+```text
+Query → Filter (company + quarters)
+      → Retrieve (multi-quarter)
+      → Group by time
+      → Compare
+      → Generate insight
 ```
 
-### Flow:
+---
 
-1. Documents are uploaded and processed
-2. Text is split into meaningful chunks
-3. Embeddings are generated using Amazon Titan
-4. Stored in FAISS for fast retrieval
-5. Query is converted into embedding
-6. Relevant chunks are retrieved
-7. Claude generates a grounded response
-8. Response is returned with sources
+## 🏗️ System Architecture
+
+### Ingestion
+
+* Upload transcripts (PDF / text)
+* Batch ingest via scripts
+* Optional web scraping (Seeking Alpha)
+
+### Processing
+
+* Speaker segmentation (CEO, CFO, Analyst)
+* Section detection (Prepared vs Q&A)
+* Chunking with metadata
+
+### Enrichment
+
+* Sentiment scoring (FinBERT / LLM-based)
+* Embeddings (OpenAI / Amazon Titan)
+
+### Storage
+
+* **PostgreSQL** → metadata + sentiment
+* **FAISS** → vector search (per company index)
+
+### Query Engine
+
+* Metadata-filtered retrieval
+* Cross-quarter grouping
+* LLM-based comparison
 
 ---
 
-## 🏗️ Tech Stack
+## 📁 Project Structure
 
-* **Backend**: FastAPI
-* **LLM**: AWS Bedrock (Claude)
-* **Embeddings**: Amazon Titan
-* **Vector Store**: FAISS
-* **Libraries**: Boto3, LangChain (optional), PyPDF
-
----
-
-## 📂 Project Structure
-
-```bash id="r9x2ml"
-FinSight-RAG/
-│── app/
-│   │── main.py
-│   │── routes/
-│   │   ├── upload.py
+```text
+EarningsCallAnalyzer/
+│
+├── app/
+│   ├── main.py
+│   ├── routes/
+│   │   ├── ingest.py
 │   │   ├── query.py
-│   │── services/
-│   │   ├── rag_pipeline.py
+│   │   └── companies.py
+│   │
+│   ├── services/
+│   │   ├── parser.py
+│   │   ├── sentiment.py
 │   │   ├── embeddings.py
-│   │   ├── retriever.py
-│   │── core/
-│   │   ├── config.py
-│   │── models/
-│   │   ├── schemas.py
+│   │   ├── vector_store.py
+│   │   ├── rag_pipeline.py
+│   │   └── trend_analyzer.py
+│   │
+│   ├── db/
+│   │   ├── models.py
+│   │   ├── crud.py
+│   │   └── database.py
+│   │
+│   └── core/
+│       ├── config.py
+│       └── schemas.py
 │
-│── interface/
-│   │── client.py
+├── interface/
+│   └── dashboard.py
 │
-│── data/
-│── requirements.txt
-│── README.md
+├── data/
+│   ├── transcripts/
+│   └── indices/
+│
+├── scripts/
+│   ├── bulk_ingest.py
+│   └── scraper.py
+│
+├── requirements.txt
+├── .env
+└── README.md
 ```
 
 ---
 
-## ⚙️ Setup Instructions
+## ⚙️ How It Works
 
-### 1. Clone Repository
+### 1. Parsing → Structured Chunks
 
-```bash id="v1l3pk"
-git clone https://github.com/your-username/FinSight-RAG.git
-cd FinSight-RAG
+```json
+{
+  "company": "TCS",
+  "quarter": "Q1-2024",
+  "speaker": "CEO",
+  "role": "management",
+  "section": "prepared",
+  "text": "..."
+}
 ```
 
 ---
 
-### 2. Create Virtual Environment
+### 2. Embedding + Storage
 
-```bash id="z8wq0c"
-python -m venv venv
-source venv/bin/activate   # macOS/Linux  
-venv\Scripts\activate      # Windows  
-```
+* Each chunk → embedding vector
+* Stored in FAISS with metadata filters
 
 ---
 
-### 3. Install Dependencies
+### 3. Cross-Quarter Retrieval
 
-```bash id="l0c9dw"
-pip install -r requirements.txt
-```
+* Filter by:
 
----
-
-## 🔐 AWS Configuration
-
-Ensure access to:
-
-* Amazon Bedrock
-* Claude model
-* Titan embeddings
-
-Set environment variables:
-
-```bash id="m2w8yn"
-export AWS_ACCESS_KEY_ID=your_key
-export AWS_SECRET_ACCESS_KEY=your_secret
-export AWS_REGION=your_region
-```
+  * company
+  * selected quarters
+* Retrieve semantically relevant chunks
 
 ---
 
-## ▶️ Running the Application
+### 4. Comparative Generation
 
-### Start FastAPI Server
+LLM receives grouped context:
 
-```bash id="n3x8qp"
-uvicorn app.main:app --reload
+```text
+Q1: ...
+Q2: ...
+Q3: ...
 ```
 
-API available at:
+Produces:
 
-```id="q7r4bt"
-http://127.0.0.1:8000
-```
-
-Interactive API docs:
-
-```id="h2v8lm"
-http://127.0.0.1:8000/docs
-```
+* Trend analysis
+* Tone shifts
+* Strategy evolution
 
 ---
 
 ## 📡 API Endpoints
 
-### Upload Document
+### POST `/ingest`
 
-**POST** `/upload`
+Upload and process transcript
+
+**Params:**
+
+* file
+* company
+* quarter
 
 ---
 
-### Query
+### POST `/query`
 
-**POST** `/query`
-
-```json id="t4k1zs"
+```json
 {
-  "question": "What are the key financial risks mentioned?"
-}
-```
-
-**Response**
-
-```json id="x9c2pq"
-{
-  "answer": "The company faces risks related to market volatility...",
-  "sources": [
-    "Page 12: Risk Factors",
-    "Page 40: Financial Overview"
-  ]
+  "query": "How has revenue guidance changed?",
+  "company": "TCS",
+  "quarters": ["Q1-2024", "Q2-2024", "Q3-2024"]
 }
 ```
 
 ---
 
-## 🧪 Future Improvements
+### GET `/companies`
 
-* ⚡ Async processing for large files
-* ☁️ Deployment on AWS (EC2 / ECS)
-* 🔍 Hybrid search (keyword + semantic)
-* 📊 Financial ratio extraction
-* 🔐 Authentication (JWT)
+### GET `/quarters`
 
 ---
 
-## 🎯 Why This Project Stands Out
+## 📈 Features
 
-* Demonstrates end-to-end RAG pipeline
-* Uses AWS Bedrock (industry-relevant GenAI stack)
-* Combines backend engineering with AI systems
-* Designed for real-world financial data use cases
+* Cross-quarter financial analysis
+* Speaker-aware chunking
+* Metadata-driven retrieval
+* Temporal comparison via LLM
+* Modular, production-style architecture
 
 ---
+
+## 🛠️ Tech Stack
+
+* **Backend:** FastAPI
+* **Vector DB:** FAISS
+* **Database:** PostgreSQL
+* **LLM:** OpenAI / Claude
+* **Embeddings:** OpenAI / Amazon Titan
+* **NLP:** FinBERT (optional)
+* **UI:** Streamlit (optional)
+
+---
+
+## 🧪 Status
+
+* ✅ Parsing & chunking
+* 🔄 Vector storage
+* 🔄 Cross-quarter retrieval
+* ⏳ Sentiment analysis
+* ⏳ Dashboard
+
+---
+
+## 💡 Future Work
+
+* Topic modeling across quarters
+* Better speaker classification
+* Real-time ingestion pipeline
+* Sentiment trend visualization
+* Alerting for narrative shifts
+
+---
+
+## 🎯 What This Demonstrates
+
+* RAG beyond basic implementation
+* Temporal reasoning in NLP systems
+* End-to-end ML system design
+* Real-world financial use case
+
+---
+
+## 📌 Example Use Cases
+
+* Equity research
+* Investment analysis
+* Earnings trend tracking
+* Risk signal detection
+
+---
+
+## 📄 License
+
+MIT
