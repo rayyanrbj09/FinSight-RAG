@@ -264,6 +264,3 @@ Upload and process transcript
 
 ---
 
-## 📄 License
-
-MIT
