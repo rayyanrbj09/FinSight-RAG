@@ -1,0 +1,112 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environment
+venv/
+env/
+ENV/
+.venv/
+
+# Environment Variables
+.env
+.env.*
+!.env.example
+
+# Streamlit
+.streamlit/secrets.toml
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# VS Code
+.vscode/
+
+# PyCharm
+.idea/
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# SQLite
+*.sqlite3
+*.db
+
+# Python build files
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Type checking
+.mypy_cache/
+.pyre/
+.pytype/
+
+# Ruff / Black
+.ruff_cache/
+
+# Node modules (if frontend added later)
+node_modules/
+
+# Hugging Face / Transformers cache
+.cache/
+huggingface/
+hf_cache/
+
+# LangChain / ChromaDB / Vector DB
+chroma/
+chromadb/
+vectorstore/
+faiss_index/
+*.faiss
+
+# ML Models
+models/
+checkpoints/
+*.pt
+*.pth
+*.onnx
+*.h5
+*.pkl
+*.joblib
+
+# Uploaded files / generated reports
+uploads/
+outputs/
+reports/
+generated/
+
+# API keys & credentials
+credentials.json
+service-account.json
+aws_credentials.json
+
+# Temporary files
+temp/
+tmp/
+*.tmp
+
+# Docker
+docker-compose.override.yml
+
+# Coverage reports
+coverage.xml
+
+# Secrets
+secrets.toml
+config.local.yaml
+config.local.json
