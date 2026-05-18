@@ -1,7 +1,114 @@
-fastapi
-uvicorn
-boto3
-faiss-cpu
-numpy
-pydantic
-python-dotenv
+# =========================
+# Backend Framework
+# =========================
+fastapi==0.116.1
+uvicorn[standard]==0.35.0
+python-multipart==0.0.20
+
+# =========================
+# Data Processing
+# =========================
+pandas==2.3.1
+numpy==2.3.2
+
+# =========================
+# Database
+# =========================
+sqlalchemy==2.0.43
+psycopg2-binary==2.9.10
+alembic==1.16.4
+
+# =========================
+# Vector Database
+# =========================
+faiss-cpu==1.11.0
+
+# =========================
+# LangChain + RAG
+# =========================
+langchain==0.3.27
+langchain-community==0.3.27
+langchain-openai==0.3.28
+langchain-core==0.3.72
+
+# =========================
+# OpenAI / AWS Bedrock
+# =========================
+openai==1.99.9
+boto3==1.39.13
+botocore==1.39.13
+
+# AWS CLI
+awscli==1.41.13
+
+# Optional Bedrock helpers
+bedrock-agentcore
+s3transfer
+
+# =========================
+# Embeddings + NLP
+# =========================
+sentence-transformers==5.0.0
+transformers==4.54.1
+torch==2.8.0
+tokenizers==0.21.4
+
+# =========================
+# ML Utilities
+# =========================
+scikit-learn==1.7.1
+scipy==1.16.1
+joblib==1.5.1
+
+# =========================
+# Financial Sentiment
+# =========================
+nltk==3.9.1
+
+# =========================
+# PDF / Document Parsing
+# =========================
+pypdf==5.9.0
+pdfplumber==0.11.7
+pymupdf==1.26.3
+
+# =========================
+# Web Scraping
+# =========================
+beautifulsoup4==4.13.4
+requests==2.32.4
+lxml==6.0.0
+selenium==4.34.2
+
+# =========================
+# Dashboard / UI
+# =========================
+streamlit==1.48.0
+plotly==6.2.0
+
+# =========================
+# Utilities
+# =========================
+python-dotenv==1.1.1
+tqdm==4.67.1
+rich==14.1.0
+loguru==0.7.3
+
+# =========================
+# API Validation
+# =========================
+pydantic==2.11.7
+email-validator==2.2.0
+
+# =========================
+# Async Support
+# =========================
+httpx==0.28.1
+aiofiles==24.1.0
+
+# =========================
+# Development
+# =========================
+pytest==8.4.1
+black==25.1.0
+flake8==7.3.0
