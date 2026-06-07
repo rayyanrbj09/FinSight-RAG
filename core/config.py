@@ -8,23 +8,26 @@ and .env files using Pydantic BaseSettings.
 from functools import lru_cache
 from typing import Optional
 
-from pydantic import BaseSettings
+from pydantic_settings import BaseSettings
 from pydantic import Field
 
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning, module="faiss")
 
-class Config(BaseSettings):
+
+class Settings(BaseSettings):
     """Configuration for Earning Calls Analyzer and environment variables management"""
 
     #App Info and settings
-    app_name: str = Field("Earning Calls Analyzer", env="APP_NAME")
-    app_version: str = Field("0.1.0", env="APP_VERSION")
-    DEBUG: bool = Field(False, env="DEBUG")
+    app_name: str = Field(default="Earning Calls Analyzer", env="APP_NAME")
+    app_version: str = Field(default="0.1.0", env="APP_VERSION")
+    DEBUG: bool = Field(default=False, env="DEBUG")
 
     #Database settings
     DATABASE_URL: str = Field(
         default="sqlite:///./earning_calls_analyzer.db", env="DATABASE_URL"
     )
-    SQLALCHEMY_ECHO: bool = Field(False, env="SQLALCHEMY_ECHO")
+    SQLALCHEMY_ECHO: bool = Field(default=False, env="SQLALCHEMY_ECHO")
 
     """AWS Configuration Settings:
     1. AWS_ACCESS_KEY_ID: AWS Access Key ID for authentication.
@@ -37,9 +40,9 @@ class Config(BaseSettings):
     8. FAISS_INDEX_DIR: This setting specifies the directory where FAISS indices will
     """
 
-    AWS_ACCESS_KEY_ID: Optional[str] = Field(None, env="AWS_ACCESS_KEY_ID")
-    AWS_SECRET_ACCESS_KEY: Optional[str] = Field(None, env="AWS_SECRET_ACCESS_KEY")
-    AWS_REGION: Optional[str] = Field(None, env="AWS_REGION")
+    AWS_ACCESS_KEY_ID: Optional[str] = Field(default=None, env="AWS_ACCESS_KEY_ID")
+    AWS_SECRET_ACCESS_KEY: Optional[str] = Field(default=None, env="AWS_SECRET_ACCESS_KEY")
+    AWS_REGION: Optional[str] = Field(default=None, env="AWS_REGION")
 
     #Bedrock settings
     BEDROCK_EMBEDDING_MODEL: str = Field(
@@ -75,7 +78,7 @@ class Config(BaseSettings):
         case_sensitive = True
 
 @lru_cache()
-def get_config() -> Config:
+def get_settings() -> Settings:
     """Get the application configuration with caching for performance."""
-    return Config()
+    return Settings()
 
