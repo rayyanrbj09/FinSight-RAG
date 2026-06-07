@@ -1,66 +1,261 @@
-"""Request and response schemas for the API."""
-
-from pydantic import BaseModel, Field
-from typing import List, Optional
-
 from datetime import datetime
-from typing import Dict, Any,Union, Optional   
+from typing import Any
 
-# These schemas are used for request validation and response formatting in the API endpoints.
-
-#-------------------Chunk Schemas-------------------#
-class chunkBase(BaseModel):
-    """The chunk schema represents a piece of text along with its associated metadata."""
-    company: str = Field(..., description="Company name associated with the chunk")
-    quarter: str = Field(..., description="Quarter associated with the chunk (e.g., Q1 2024)")
-    speaker: Optional[str] = Field(default=None, description="Speaker associated with the chunk (if applicable)")
-    role: Optional[str] = Field(default=None, description="Role of the speaker (e.g., CEO, CFO)")
-    section: Optional[str] = Field(default=None, description="Section of the earnings call (e.g., Introduction, Q&A)")
-    text: str = Field(..., description="The actual text content of the chunk")
-
-class chunkMetadata(chunkBase):
-    """Metadata for a text chunk, including source information and timestamps."""
-    source: str = Field(..., description="Source of the chunk (e.g., document name or URL)")
-    created_at: datetime = Field(default_factory=datetime.utcnow, description="Timestamp when the chunk was created")
-    additional_info: Optional[Dict[str, Any]] = Field(default=None, description="Any additional metadata information")
-
-class chunkCreate(chunkBase):
-    """Schema for creating a new text chunk."""
-    transcript_id: str
-    sentiment_score: Optional[float] = Field(default=None, description="Sentiment score for the chunk (if applicable)")
-
-class chunkResponse(chunkBase):
-    """Schema for the response when retrieving a text chunk."""
-    id: int = Field(..., description="Unique identifier for the chunk")
-    transcript_id: str
-    sentiment_score: Optional[float] = Field(default=None, description="Sentiment score for the chunk (if applicable)")
-    created_at: datetime = Field(..., description="Timestamp when the chunk was created")
-
-    class config:
-        orm_mode = True  # Enable ORM mode for compatibility with SQLAlchemy models,enable CRUD operations
-        from_attributes = True  # Allow population from ORM attributes
+from pydantic import BaseModel, ConfigDict, Field
 
 
-#------------------------------Transcript Schemas------------------------------#
-class transcriptBase(BaseModel):
-    "Base schema for a transcript, containing common fields for both creation and response."
+# ==================== Chunk Schemas ====================
 
-    company: str = Field(..., description="Company name associated with the transcript")
-    quarter: str = Field(..., description="Quarter associated with the transcript (e.g., Q1 2024)")
-    year: int = Field(..., description="Year associated with the transcript")
-    date: datetime = Field(..., description="Date of the earnings call")
-    file_name: Optional[str] = Field(default=None, description="Original file name of the transcript (if applicable)")
-    
-class transcriptCreate(transcriptBase):
-    """Schema for creating a new transcript, inheriting from the base schema."""
-    raw_txt : str = Field(..., description="The raw text content of the transcript")
+class ChunkBase(BaseModel):
+    """Base schema for a text chunk."""
 
-class transcriptResponse(transcriptBase):
-    "Schema for the response when retrieving a transcript, including an ID and creation timestamp."
-    id: int = Field(..., description="Unique identifier for the transcript")
-    created_at: datetime = Field(default_factory=datetime.utcnow, description="Timestamp when the transcript was created")
-    chunk_count: int = Field(..., description="Number of chunks associated with the transcript")
+    company: str = Field(..., description="Company name")
+    quarter: str = Field(..., description="Quarter (e.g. Q1 2024)")
+    speaker: str | None = Field(None, description="Speaker name")
+    role: str | None = Field(None, description="Speaker role")
+    section: str | None = Field(None, description="Transcript section")
+    text: str = Field(..., description="Chunk text")
 
-    class config:
-        orm_mode = True  # Enable ORM mode for compatibility with SQLAlchemy models
-        from_attributes = True  # Allow population from ORM attributes
+
+class ChunkMetadata(ChunkBase):
+    """Chunk metadata."""
+
+    source: str = Field(..., description="Document source")
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    additional_info: dict[str, Any] | None = None
+
+
+class ChunkCreate(ChunkBase):
+    """Create chunk schema."""
+
+    transcript_id: int
+    sentiment_score: float | None = None
+
+
+class ChunkResponse(ChunkBase):
+    """Chunk response schema."""
+
+    id: int
+    transcript_id: int
+    sentiment_score: float | None = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+# ==================== Transcript Schemas ====================
+
+class TranscriptBase(BaseModel):
+    """Base transcript schema."""
+
+    company: str
+    quarter: str
+    year: int
+    date: datetime
+    file_name: str | None = None
+
+
+class TranscriptCreate(TranscriptBase):
+    """Create transcript schema."""
+
+    raw_text: str
+
+
+class TranscriptResponse(TranscriptBase):
+    """Transcript response schema."""
+
+    id: int
+    created_at: datetime
+    chunk_count: int
+
+    class Config:
+        from_attributes = True
+
+
+# ==================== Sentiment Schemas ====================
+
+class SentimentBase(BaseModel):
+    """Base sentiment schema."""
+
+    chunk_id: int
+
+    sentiment_score: float = Field(
+        ...,
+        ge=-1.0,
+        le=1.0,
+        description="Sentiment score",
+    )
+
+    label: str | None = None
+
+    confidence: float | None = Field(
+        None,
+        ge=0.0,
+        le=1.0,
+    )
+
+
+class SentimentResponse(SentimentBase):
+    """Sentiment response schema."""
+
+    id: int
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+# ==================== Data Ingestion Schemas ====================
+
+class DataIngestionRequest(BaseModel):
+    """Transcript ingestion request."""
+
+    company: str
+    quarter: str
+    year: int
+    date: datetime
+
+    file_name: str | None = None
+    raw_text: str
+
+    chunk_size: int = Field(
+        default=500,
+        ge=100,
+        le=2000,
+    )
+
+    status: str = Field(
+        default="pending",
+    )
+
+
+class DataIngestionResponse(BaseModel):
+    """Transcript ingestion response."""
+
+    transcript_id: int
+    company: str
+    quarter: str
+    chunk_count: int
+    status: str
+    created_at: datetime
+
+
+# ==================== Query Schemas ====================
+
+class QueryRequest(BaseModel):
+    """Cross-quarter query request."""
+
+    query: str = Field(
+        ...,
+        min_length=5,
+        max_length=500,
+    )
+
+    company: str
+
+    quarters: list[str] = Field(
+        default_factory=list,
+        description="Empty means all quarters",
+    )
+
+    top_k: int = Field(
+        default=5,
+        ge=1,
+        le=20,
+    )
+
+
+class RetrievedChunk(BaseModel):
+    """Retrieved chunk schema."""
+
+    chunk_id: int
+    quarter: str
+    speaker: str | None = None
+    section: str | None = None
+    text: str
+    similarity_score: float
+
+
+class QueryResponse(BaseModel):
+    """Query response schema."""
+
+    query: str
+    company: str
+    quarters: list[str]
+
+    retrieved_chunks: list[RetrievedChunk] = Field(
+        default_factory=list
+    )
+
+    analysis: str | None = None
+
+    timestamp: datetime = Field(
+        default_factory=datetime.utcnow
+    )
+
+
+# ==================== Company & Quarter Schemas ====================
+
+class CompanyResponse(BaseModel):
+    """Company listing schema."""
+
+    name: str
+    transcript_count: int
+
+    available_quarters: list[str] = Field(
+        default_factory=list
+    )
+
+
+class QuartersResponse(BaseModel):
+    """Quarter listing schema."""
+
+    company: str
+
+    quarters: list[str] = Field(
+        default_factory=list
+    )
+
+
+# ==================== Trend Analysis Schemas ====================
+
+class TrendAnalysisRequest(BaseModel):
+    """Trend analysis request."""
+
+    company: str
+
+    quarters: list[str] = Field(
+        ...,
+        min_length=2,
+        description="At least 2 quarters required",
+    )
+
+    topic: str
+
+
+class TrendAnalysisResponse(BaseModel):
+    """Trend analysis response."""
+
+    company: str
+    quarters: list[str]
+    topic: str
+
+    trend_description: str
+
+    sentiment_trajectory: dict[str, float]
+
+    key_shifts: list[str]
+
+
+# ==================== Error Schemas ====================
+
+class ErrorResponse(BaseModel):
+    """API error response."""
+
+    detail: str
+    status_code: int
+
+    timestamp: datetime = Field(
+        default_factory=datetime.utcnow
+    )
