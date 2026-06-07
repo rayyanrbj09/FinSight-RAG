@@ -21,7 +21,7 @@ class ChunkMetadata(ChunkBase):
     """Chunk metadata."""
 
     source: str = Field(..., description="Document source")
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=datetime.utcnow, description="Creation timestamp")
     additional_info: dict[str, Any] | None = None
 
 
@@ -40,8 +40,7 @@ class ChunkResponse(ChunkBase):
     sentiment_score: float | None = None
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ==================== Transcript Schemas ====================
