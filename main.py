@@ -1,10 +1,8 @@
-import boto3
+from core import config
+from core.schemas import SentimentBase, TranscriptCreate, TranscriptResponse
 
-import boto3
-
-bedrock = boto3.client(
-    "IAMBedrockRuntime",
-    region_name="us-east-1"
-)
-
-PRINT_BEDROCK_MODELS = True
+print("App Name:", config.Settings().APP_NAME)
+print("API Host:", config.Settings().API_HOST)
+print("AWS Region:", config.Settings().AWS_REGION)
+print("AWS Bedrock LLM Model:", config.Settings().BEDROCK_LLM_MODEL)
+print("aws sceret access key:", config.Settings().AWS_SECRET_ACCESS_KEY)

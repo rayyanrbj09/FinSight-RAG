@@ -102,7 +102,7 @@ tmp/
 
 # Docker
 docker-compose.override.yml
-.env
+
 # Coverage reports
 coverage.xml
 
