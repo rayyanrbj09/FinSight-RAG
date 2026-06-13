@@ -5,10 +5,7 @@ from sqlalchemy.orm import relationship
 
 Base = declarative_base()
 
-
 class Company(Base):
-    """Root entity for all financial data. Each company is independent with its own
-    transcripts and vector indices. Cascading deletes ensure cleanup when company removed."""
     __tablename__ = "companies"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -20,9 +17,6 @@ class Company(Base):
 
 
 class Transcript(Base):
-    """Represents a single earnings call transcript for a company.
-    Unique constraint on (company_id, quarter, year) prevents duplicate transcripts.
-    Index on same columns speeds up lookups by quarter/year for batch processing."""
     __tablename__ = "transcripts"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -46,9 +40,6 @@ class Transcript(Base):
 
 
 class Chunk(Base):
-    """Text segments extracted from transcripts, tagged with metadata (speaker, role, section).
-    Direct company_id link enables searching across all company chunks without traversing transcript.
-    One-to-one relationship with Sentiment (each chunk has max one sentiment record)."""
     __tablename__ = "chunks"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -72,23 +63,19 @@ class Chunk(Base):
 
 
 class Sentiment(Base):
-    """Sentiment analysis results for a chunk. Unique on chunk_id enforces one sentiment per chunk.
-    Score range: -1.0 (negative) to 1.0 (positive). Deleted when parent chunk deleted."""
     __tablename__ = "sentiments"
 
     id = Column(Integer, primary_key=True, index=True)
     chunk_id = Column(Integer, ForeignKey("chunks.id"), unique=True, nullable=False)
-    score = Column(Float, nullable=False)
-    label = Column(String(20))
-    confidence = Column(Float)
+    score = Column(Float, nullable=False)  # -1.0 to 1.0
+    label = Column(String(20))  # positive, negative, neutral
+    confidence = Column(Float)  # 0.0 to 1.0
     created_at = Column(DateTime, default=datetime.utcnow)
 
     chunk = relationship("Chunk", back_populates="sentiment")
 
 
 class VectorIndex(Base):
-    """Stores embedding index metadata per company. Unique on company_id ensures one vector
-    index per company. Tracks chunk_count for validation and embedding model used for regeneration."""
     __tablename__ = "vector_indices"
 
     id = Column(Integer, primary_key=True, index=True)
