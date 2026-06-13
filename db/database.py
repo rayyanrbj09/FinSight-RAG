@@ -14,14 +14,12 @@ def get_database_url() -> str:
     return settings.DATABASE_URL
 
 
-# SQLite-specific settings: check_same_thread=False allows cross-thread access (needed for async).
-# StaticPool prevents connection recycling for in-memory DBs. Non-SQLite uses default NullPool.
 engine = create_engine(
     get_database_url(),
-    echo=settings.SQLALCHEMY_ECHO,
     pool_pre_ping=True,
-    connect_args={"check_same_thread": False} if "sqlite" in get_database_url() else {},
-    poolclass=StaticPool if "sqlite" in get_database_url() else None,
+    pool_size=10,
+    max_overflow=20,
+    pool_recycle=3600,
 )
 
 SessionLocal = sessionmaker(
@@ -32,7 +30,7 @@ SessionLocal = sessionmaker(
 
 
 def get_db():
-    """Dependency for getting database session. Always rolls back on error before closing."""
+    """Dependency for getting database session."""
     db = SessionLocal()
     try:
         yield db
@@ -45,7 +43,7 @@ def get_db():
 
 
 def init_db() -> None:
-    """Initialize database with all tables defined in Base.metadata."""
+    """Initialize database with all tables."""
     try:
         Base.metadata.create_all(bind=engine)
         logger.info("Database tables created successfully")
@@ -55,7 +53,7 @@ def init_db() -> None:
 
 
 def drop_all_tables() -> None:
-    """Drop all tables. Dangerous operation—use only for testing or reset."""
+    """Drop all tables (use with caution)."""
     try:
         Base.metadata.drop_all(bind=engine)
         logger.warning("All database tables dropped")
@@ -64,7 +62,7 @@ def drop_all_tables() -> None:
         raise
 
 def reset_database() -> None:
-    """Full reset: drop all tables and recreate schema. Use for dev/testing only."""
+    """Reset the database by dropping and recreating all tables."""
     try:
         drop_all_tables()
         init_db()
@@ -72,3 +70,14 @@ def reset_database() -> None:
     except Exception as e:
         logger.error(f"Failed to reset database: {e}")
         raise
+
+
+from sqlalchemy import event
+
+if "sqlite" in get_database_url():
+
+    @event.listens_for(engine, "connect")
+    def set_sqlite_pragma(dbapi_connection, connection_record):
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA foreign_keys=ON")
+        cursor.close()

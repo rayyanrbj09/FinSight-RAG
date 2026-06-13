@@ -1,0 +1,358 @@
+# User-Level Access Control Implementation for FinSightRAG
+
+## Overview
+The current system has **no authentication/authorization layer**. Here's a comprehensive breakdown of what can be implemented:
+
+---
+
+## 1. AUTHENTICATION LAYER
+### User Model & Authentication
+- **User Registration & Login**
+  - JWT token-based authentication
+  - Password hashing (bcrypt)
+  - Email verification
+  - 2FA/MFA support
+
+- **Session Management**
+  - Token expiration (access + refresh tokens)
+  - Device tracking
+  - Login history
+
+---
+
+## 2. ROLE-BASED ACCESS CONTROL (RBAC)
+### User Roles
+```
+- Admin
+  ├─ View/Edit/Delete all data
+  ├─ Manage users & permissions
+  ├─ System configuration
+  └─ Audit logs
+
+- Analyst/Manager
+  ├─ View assigned company data
+  ├─ Create/Edit analysis
+  ├─ Export reports
+  └─ View team analytics
+
+- Viewer/Stakeholder
+  ├─ View-only access to assigned companies
+  ├─ Limited to dashboards/reports
+  └─ No data modification
+
+- API User
+  ├─ API key-based access
+  ├─ Rate-limited endpoints
+  └─ Audit logged
+```
+
+---
+
+## 3. DATA-LEVEL ACCESS CONTROL
+### Company Access Scoping
+- **User-Company Mapping**
+  - Users can be assigned to specific companies
+  - Teams can manage multiple companies
+  - Hierarchical access (parent company → subsidiaries)
+
+- **Transcript Access**
+  - Restrict by company
+  - Restrict by year/quarter range
+  - Restrict by document type
+
+- **Sentiment/Chunk Access**
+  - Inherit company permissions
+  - Custom access rules per analysis
+
+---
+
+## 4. PERMISSION LEVELS
+### Granular Permissions
+```
+Company Level:
+  - company.view       → Read company data
+  - company.create     → Create new company
+  - company.edit       → Edit company metadata
+  - company.delete     → Delete company (cascading)
+
+Transcript Level:
+  - transcript.view
+  - transcript.create
+  - transcript.edit
+  - transcript.delete
+
+Analysis Level:
+  - analysis.view      → View sentiment analysis
+  - analysis.create    → Run new analysis
+  - analysis.edit      → Modify analysis parameters
+  - analysis.export    → Export results
+
+Vector Index Level:
+  - index.view
+  - index.regenerate
+  - index.delete
+```
+
+---
+
+## 5. ORGANIZATION/TEAM MANAGEMENT
+### Multi-Tenant Structure
+- **Organizations**
+  - Separate data silos per organization
+  - Organization admins
+  - Subscription tiers/limits
+
+- **Teams**
+  - Sub-groups within organization
+  - Team leads with delegation rights
+  - Cross-team collaboration settings
+
+- **Departments**
+  - Finance, Operations, Strategy, etc.
+  - Department-specific data access
+
+---
+
+## 6. AUDIT & COMPLIANCE
+### Activity Logging
+- User login/logout
+- Data access logs
+- Modification history (who/when/what changed)
+- API request logs with IPs
+- Failed access attempts
+
+### Compliance Features
+- Data retention policies
+- GDPR compliance (data export/deletion)
+- SOX compliance (for financial institutions)
+- Change audit trails
+
+---
+
+## 7. API & RATE LIMITING
+### API Key Management
+- Generate/revoke API keys
+- Scoped permissions per key
+- Expiration dates
+- Usage statistics
+
+### Rate Limiting
+- Per-user rate limits
+- Per-API-key limits
+- Burst protection
+- Throttling by role
+
+---
+
+## 8. SECURITY FEATURES
+### Additional Protections
+- IP whitelisting (optional)
+- Geographic restrictions
+- Device fingerprinting
+- Suspicious activity alerts
+- Password policies (complexity, expiration)
+- Account lockout after failed attempts
+- Session invalidation on password change
+
+---
+
+## 9. DATA PRIVACY
+### Privacy Controls
+- Field-level masking (sensitive financial data)
+- PII redaction in logs
+- Data anonymization for exports
+- Privacy policy acceptance tracking
+
+---
+
+## 10. DELEGATION & PROXY ACCESS
+### Admin Functions
+- Admin impersonation (with audit trail)
+- Temporary access grants
+- Delegation workflows
+
+---
+
+## DATABASE SCHEMA ADDITIONS NEEDED
+
+```python
+# New Tables to Create
+
+class User(Base):
+    id: int
+    email: str (unique)
+    username: str (unique)
+    hashed_password: str
+    is_active: bool
+    is_verified: bool
+    created_at: datetime
+    updated_at: datetime
+    last_login: datetime
+    roles: relationship(UserRole, many-to-many)
+
+class Role(Base):
+    id: int
+    name: str (Admin, Analyst, Viewer, etc.)
+    description: str
+    permissions: relationship(Permission, many-to-many)
+
+class Permission(Base):
+    id: int
+    name: str (company.view, transcript.create, etc.)
+    description: str
+
+class Organization(Base):
+    id: int
+    name: str
+    subscription_tier: str
+    owner_id: ForeignKey(User)
+    users: relationship(User, many-to-many)
+
+class Team(Base):
+    id: int
+    name: str
+    organization_id: ForeignKey(Organization)
+    lead_id: ForeignKey(User)
+    users: relationship(User, many-to-many)
+
+class UserCompanyAccess(Base):
+    id: int
+    user_id: ForeignKey(User)
+    company_id: ForeignKey(Company)
+    access_level: str (view, edit, admin)
+    created_at: datetime
+
+class UserRoleAssignment(Base):
+    user_id: ForeignKey(User)
+    role_id: ForeignKey(Role)
+    assigned_by: ForeignKey(User)
+    assigned_at: datetime
+
+class AuditLog(Base):
+    id: int
+    user_id: ForeignKey(User)
+    action: str
+    resource_type: str (Company, Transcript, etc.)
+    resource_id: int
+    old_value: JSON
+    new_value: JSON
+    ip_address: str
+    timestamp: datetime
+
+class APIKey(Base):
+    id: int
+    user_id: ForeignKey(User)
+    key_hash: str
+    name: str
+    permissions: JSON
+    rate_limit: int
+    created_at: datetime
+    expires_at: datetime
+    last_used: datetime
+    is_active: bool
+```
+
+---
+
+## IMPLEMENTATION PRIORITY
+
+### Phase 1 (MVP)
+- ✅ User registration/login with JWT
+- ✅ Basic RBAC (Admin, Analyst, Viewer)
+- ✅ Company-level access control
+- ✅ Basic audit logging
+
+### Phase 2
+- ✅ Organization/Team management
+- ✅ Granular permissions system
+- ✅ API key management
+- ✅ Rate limiting
+
+### Phase 3
+- ✅ Advanced audit trails
+- ✅ Compliance features
+- ✅ IP whitelisting
+- ✅ Data masking/PII redaction
+
+### Phase 4
+- ✅ SSO/OAuth integration
+- ✅ Advanced delegation
+- ✅ Machine learning-based anomaly detection
+
+---
+
+## MIDDLEWARE & DECORATORS NEEDED
+
+```python
+# FastAPI Dependencies & Decorators
+
+async def get_current_user(token: str) -> User:
+    """Extract & validate JWT token"""
+
+async def require_role(*roles: str):
+    """Check user has required role"""
+
+async def require_permission(*permissions: str):
+    """Check user has specific permission"""
+
+async def require_company_access(company_id: int):
+    """Verify user has access to company"""
+
+def audit_log(action: str, resource_type: str):
+    """Decorator to log all data modifications"""
+
+def rate_limit(calls_per_minute: int):
+    """Rate limiting decorator"""
+```
+
+---
+
+## EXAMPLE API ENDPOINT CHANGES
+
+**Before:**
+```python
+@app.get("/companies/")
+def get_all_companies(db: Session = Depends(get_db)):
+    return crud.get_all_companies(db)
+```
+
+**After:**
+```python
+@app.get("/companies/")
+@require_role("Admin", "Analyst", "Viewer")
+@audit_log("VIEW", "Company")
+@rate_limit(100)
+async def get_all_companies(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    # Only return companies user has access to
+    companies = crud.get_companies_for_user(db, current_user.id)
+    return companies
+```
+
+---
+
+## SECURITY CONSIDERATIONS
+
+1. **Password Storage**: Use bcrypt with salt
+2. **Token Security**: Secure HTTPOnly cookies for tokens
+3. **HTTPS**: Enforce in production
+4. **CORS**: Restrict to known domains
+5. **SQL Injection**: Parameterized queries (already using SQLAlchemy)
+6. **Rate Limiting**: Prevent brute force attacks
+7. **Logging**: Never log sensitive data (passwords, tokens)
+8. **Encryption**: Encrypt sensitive fields at rest
+
+---
+
+## QUICK START RECOMMENDATION
+
+**Start with Phase 1 implementation:**
+1. Add User model with JWT auth
+2. Implement basic RBAC
+3. Add company-level access checks
+4. Add audit logging to crud.py
+5. Protect all API endpoints
+
+This provides immediate security without overwhelming complexity.
