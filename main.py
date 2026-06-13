@@ -1,8 +1,65 @@
-from core import config
-from core.schemas import SentimentBase, TranscriptCreate, TranscriptResponse
+"""FastAPI application for Earnings Calls Analyzer."""
 
-print("App Name:", config.Settings().APP_NAME)
-print("API Host:", config.Settings().API_HOST)
-print("AWS Region:", config.Settings().AWS_REGION)
-print("AWS Bedrock LLM Model:", config.Settings().BEDROCK_LLM_MODEL)
-print("aws sceret access key:", config.Settings().AWS_SECRET_ACCESS_KEY)
+import logging
+from contextlib import asynccontextmanager
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from core.config import settings
+from db.database import init_db
+
+# Setup logging
+logging.basicConfig(
+    level=settings.LOG_LEVEL,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
+logger = logging.getLogger(__name__)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Manage application lifespan."""
+    # Startup
+    logger.info(f"Starting {settings.APP_NAME} v{settings.APP_VERSION}")
+    init_db()
+    logger.info("Database initialized")
+    yield
+    # Shutdown
+    logger.info("Shutting down application")
+
+
+app = FastAPI(
+    title=settings.APP_NAME,
+    version=settings.APP_VERSION,
+    description="Temporal RAG system for analyzing earnings call transcripts",
+    lifespan=lifespan,
+)
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+@app.get("/health")
+def health_check():
+    """Health check endpoint."""
+    return {
+        "status": "healthy",
+        "app_name": settings.APP_NAME,
+        "version": settings.APP_VERSION,
+    }
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(
+        app,
+        host=settings.API_HOST,
+        port=settings.API_PORT,
+    )
