@@ -49,6 +49,7 @@ class Settings(BaseSettings):
 
     DATABASE_URL: str = "sqlite:///./earning_calls_analyzer.db"
     SQLALCHEMY_ECHO: bool = False
+    VECTOR_DB : str = "faiss"  # Options: "faiss", "weaviate", "milvus", "pinecone", "qdrant"
 
     # ==================== AWS Settings ====================
 
@@ -56,6 +57,17 @@ class Settings(BaseSettings):
     AWS_SECRET_ACCESS_KEY: Optional[str] = None
     AWS_REGION: Optional[str] = None
 
+    SUPPORTED_FILE_TYPES = [".pdf"]
+    MAX_UPLOAD_SIZE_MB = 50
+
+    ROLE_USER = "user"
+    ROLE_ADMIN = "admin"
+
+    DEFAULT_ENCODING = "utf-8"
+
+    # ==================== Model temperature ====================
+    LLM_TEMPERATURE: float = 0.7  # Default temperature for LLM responses
+    LLM_MAX_TOKENS: int = 2048  # Default max tokens for LLM responses
     # ==================== Bedrock Settings ====================
 
     BEDROCK_EMBEDDING_MODEL: str = (
@@ -88,6 +100,15 @@ class Settings(BaseSettings):
 
     LOG_LEVEL: str = "INFO"
     LOG_FILE: str = "./logs/app.log"
+    LOG_DIR: str = "./logs"
+    LOG_MAX_BYTES: int = 100 * 1024 * 1024  # 100 MB
+    LOG_BACKUP_COUNT: int = 5  # Number of backup log files to keep
+
+    UPLOAD_DIR: str = "./data/uploads"
+
+    PROCESSED_DIR: str = "./data/processed"
+
+    CACHE_DIR: str = "./data/cache"
 
     # ==================== Helper Properties ====================
 
@@ -118,4 +139,5 @@ def get_settings() -> Settings:
 
 
 # Singleton settings instance
+
 settings = get_settings()
