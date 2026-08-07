@@ -119,4 +119,3 @@ def get_settings() -> Settings:
 
 # Singleton settings instance
 settings = get_settings()
-
