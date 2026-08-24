@@ -9,6 +9,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from core.config import settings
 from db.database import init_db
 
+# Import auth routes to register them with the FastAPI app
+from routes.auth import router as auth_router
+
 # Setup logging
 logging.basicConfig(
     level=settings.LOG_LEVEL,
@@ -44,6 +47,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Register routers
+app.include_router(auth_router, prefix="/auth", tags=["auth"]) 
 
 
 @app.get("/health")

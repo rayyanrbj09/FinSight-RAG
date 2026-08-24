@@ -24,6 +24,9 @@ from typing import Optional
 import warnings
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from typing import Optional
+
+
 
 warnings.filterwarnings("ignore", category=UserWarning, module="faiss")
 
@@ -125,6 +128,13 @@ class Settings(BaseSettings):
             and self.AWS_SECRET_ACCESS_KEY
             and self.AWS_REGION
         )
+
+    # ==================== Authentication ====================
+
+    # Secret used for signing JWTs. Should be set in environment for production.
+    AUTH_SECRET: str = "change-me"
+    # Access token lifetime in minutes
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
 
 
 @lru_cache
