@@ -20,7 +20,7 @@ AWS Configuration Settings:
     8. FAISS_INDEX_DIR: This setting specifies the directory where FAISS indices will
 """
 from functools import lru_cache
-from typing import Optional
+from typing import ClassVar, Optional
 import warnings
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -57,13 +57,13 @@ class Settings(BaseSettings):
     AWS_SECRET_ACCESS_KEY: Optional[str] = None
     AWS_REGION: Optional[str] = None
 
-    SUPPORTED_FILE_TYPES = [".pdf"]
-    MAX_UPLOAD_SIZE_MB = 50
+    SUPPORTED_FILE_TYPES: ClassVar[list[str]] = [".pdf"]
+    MAX_UPLOAD_SIZE_MB: ClassVar[int] = 50
 
-    ROLE_USER = "user"
-    ROLE_ADMIN = "admin"
+    ROLE_USER: ClassVar[str] = "user"
+    ROLE_ADMIN: ClassVar[str] = "admin"
 
-    DEFAULT_ENCODING = "utf-8"
+    DEFAULT_ENCODING: ClassVar[str] = "utf-8"
 
     # ==================== Model temperature ====================
     LLM_TEMPERATURE: float = 0.7  # Default temperature for LLM responses
@@ -93,6 +93,11 @@ class Settings(BaseSettings):
 
     API_HOST: str = "0.0.0.0"
     API_PORT: int = 8000
+
+    JWT_SECRET_KEY: str = "change-me-in-production"
+    JWT_ALGORITHM: str = "HS256"
+    JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+    JWT_REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
     CORS_ORIGINS: list[str] = ["*"]
 

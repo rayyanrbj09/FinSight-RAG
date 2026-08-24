@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from core.config import settings
 from db.database import init_db
+from routes.auth import router as auth_router
 
 # Setup logging
 logging.basicConfig(
@@ -35,6 +36,8 @@ app = FastAPI(
     description="Temporal RAG system for analyzing earnings call transcripts",
     lifespan=lifespan,
 )
+
+app.include_router(auth_router, prefix="/auth")
 
 # Add CORS middleware
 app.add_middleware(
