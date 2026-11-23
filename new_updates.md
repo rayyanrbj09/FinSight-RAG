@@ -2,7 +2,7 @@ FinSight-RAG/
 ├── core/                          ← CONFIG & SCHEMAS
 │   ├── config.py                 (+ add AUTH_SECRET, TOKEN_EXPIRE settings)
 │   ├── schemas.py                (+ add User, Role, Permission schemas)
-│   └── security.py               ✨ NEW - JWT token generation/verification
+│   └── security.py               ✨     NEW - JWT token generation/verification
 │
 ├── db/                            ← DATABASE LAYER
 │   ├── models.py                 (+ add User, Role, Permission, AuditLog models)

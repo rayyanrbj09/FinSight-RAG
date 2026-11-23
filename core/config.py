@@ -91,7 +91,7 @@ class Settings(BaseSettings):
 
     # ==================== API ====================
 
-    API_HOST: str = "0.0.0.0"
+    API_HOST: str = "127.0.0.1"
     API_PORT: int = 8000
 
     JWT_SECRET_KEY: str = "change-me-in-production"

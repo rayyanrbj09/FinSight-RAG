@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:18
+    container_name: postgres-FinSight RAG
+    restart: always
+    environment:
+      POSTGRES_USER : FingSight-RAG
+      POSTGRES_PASSWORD : FingSight-RAG
+      POSTGRES_DB : FingSight-RAG
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+
+volumes:
+  postgres_data:
