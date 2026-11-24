@@ -57,7 +57,7 @@ class Settings(BaseSettings):
     AWS_SECRET_ACCESS_KEY: Optional[str] = None
     AWS_REGION: Optional[str] = None
 
-    SUPPORTED_FILE_TYPES: ClassVar[list[str]] = [".pdf"]
+    SUPPORTED_FILE_TYPES: ClassVar[list[str]] = [".pdf", ".txt", ".text"]
     MAX_UPLOAD_SIZE_MB: ClassVar[int] = 50
 
     ROLE_USER: ClassVar[str] = "user"
