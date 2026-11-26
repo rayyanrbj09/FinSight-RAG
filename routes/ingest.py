@@ -49,8 +49,6 @@ async def ingest_transcript(
     current_user: User = Depends(get_current_user),
 ) -> DataIngestionResponse:
     """Parse and persist an earnings-call transcript."""
-    del current_user
-
     filename = file.filename or ""
     extension = filename.lower().rsplit(".", 1)[-1] if "." in filename else ""
     if f".{extension}" not in settings.SUPPORTED_FILE_TYPES:
@@ -96,6 +94,7 @@ async def ingest_transcript(
         db_company.id,
         resolved_quarter,
         resolved_year,
+        current_user.id,
     )
     if existing:
         raise HTTPException(
@@ -105,6 +104,7 @@ async def ingest_transcript(
 
     try:
         transcript = Transcript(
+            owner_user_id=current_user.id,
             company_id=db_company.id,
             company_name=db_company.name,
             quarter=resolved_quarter,

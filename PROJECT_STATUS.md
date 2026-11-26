@@ -80,11 +80,11 @@ These changes were already present; they were not made as part of this document:
 - Modified: `main.py` (includes the ingestion router).
 - Untracked: `routes/ingest.py`, `services/parser.py`, and `tests/`.
 
-The project virtual environment's Python executable points to a Python 3.13 installation that is unavailable on this machine. The two parser tests passed with the system Python 3.14 when run from the project root. Re-establishing a reproducible project environment is an early roadmap task.
+The project virtual environment uses Python 3.13.5 and is available. The project tests pass when run with `.\venv\Scripts\python.exe -m pytest tests -q`.
 
 ## Important decisions to agree on
 
-1. **Transcript visibility:** Is the corpus shared among all users, or should each user's uploaded transcripts be private? Current transcript records are not associated with the authenticated user, so this must be resolved before query access is built.
+1. **Transcript visibility:** Agreed: each user's uploaded transcripts are private to that uploader. Legacy transcripts without a recorded owner remain inaccessible until ownership is explicitly verified and assigned.
 2. **Vector storage:** Proposed first production direction: PostgreSQL with `pgvector`, keeping vectors and company/quarter metadata together. Confirm this against expected dataset size and operational needs before implementation.
 3. **AWS scope:** Confirm AWS account, region, Bedrock model access, and budget before creating resources. Start with a development environment.
 4. **Ingestion processing:** Decide when upload volume warrants SQS and a separate worker; it is not required for the first local retrieval milestone.
@@ -115,7 +115,8 @@ This is a planning baseline, not a commitment to finish a stage without review. 
 
 | Day | Proposed focus | Learning goal / completion evidence |
 | --- | --- | --- |
-| 1 | Agree on corpus visibility; make the test command/environment reproducible; record baseline | Understand authorization scope and repeatable testing |
+ | 1 | Agree on corpus visibility; make the test command/environment reproducible; record baseline | Understand authorization scope and repeatable testing |
+ ````````````                            `
 | 2 | Design and add database migrations and the agreed ownership model | Understand schema evolution, tenant boundaries, and migration rollback |
 | 3 | Harden upload validation and parser behavior; add focused ingestion tests | Understand request validation, transaction boundaries, and failure cases |
 | 4 | Agree AWS development setup; add private S3 storage and IAM-role configuration | Understand object storage, IAM least privilege, and secret handling |
@@ -146,8 +147,9 @@ A roadmap item is done only when:
 
 - Reviewed the current FinSight project structure, implementation, docs, and test baseline.
 - Recorded the initial architecture, known gaps, AWS direction, and proposed roadmap in this document.
+- Implemented uploader-scoped transcript, chunk, sentiment, and vector-index access, with a migration that leaves legacy records unassigned.
+- Verified the test suite and legacy/fresh SQLite migration paths.
 
 ### Next discussion
 
-- Agree whether transcript data is shared or private per user.
 - Confirm the development AWS region/account and budget only when ready to plan provisioning.

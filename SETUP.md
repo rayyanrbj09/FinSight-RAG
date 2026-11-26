@@ -116,6 +116,18 @@ createdb earnings_analyzer
 DATABASE_URL=postgresql://user:password@localhost:5432/earnings_analyzer
 ```
 
+### Transcript ownership and migrations
+
+Each new transcript and vector-index record is scoped to the authenticated uploader. Existing records are preserved with no owner and are therefore unavailable through user-scoped access until an administrator explicitly assigns them.
+
+Run migrations from the repository root before starting the application after updating the code:
+
+```powershell
+.\venv\Scripts\python.exe -m alembic upgrade head
+```
+
+The migration adds nullable ownership fields so existing records are not assigned to a user without evidence. It also permits different users to upload the same company's transcript for the same quarter. Do not assign legacy records unless their owner is verified.
+
 ### 4. AWS Bedrock Setup
 
 ```bash
