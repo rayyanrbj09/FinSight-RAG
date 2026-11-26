@@ -20,6 +20,9 @@ class User(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     last_login = Column(DateTime, nullable=True)
 
+    transcripts = relationship("Transcript", back_populates="owner")
+    vector_indices = relationship("VectorIndex", back_populates="owner")
+
 
 class Company(Base):
     __tablename__ = "companies"
@@ -28,14 +31,12 @@ class Company(Base):
     name = Column(String(255), unique=True, nullable=False, index=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
-    transcripts = relationship("Transcript", back_populates="company", cascade="all, delete-orphan")
-    vector_indices = relationship("VectorIndex", back_populates="company", cascade="all, delete-orphan")
-
 
 class Transcript(Base):
     __tablename__ = "transcripts"
 
     id = Column(Integer, primary_key=True, index=True)
+    owner_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     company_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
     company_name = Column(String(255), nullable=False)
     quarter = Column(String(10), nullable=False)
@@ -46,12 +47,19 @@ class Transcript(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    company = relationship("Company", back_populates="transcripts")
+    owner = relationship("User", back_populates="transcripts")
+    company = relationship("Company")
     chunks = relationship("Chunk", back_populates="transcript", cascade="all, delete-orphan")
 
     __table_args__ = (
         Index("idx_company_quarter_year", "company_id", "quarter", "year"),
-        UniqueConstraint("company_id", "quarter", "year", name="uq_company_quarter_year"),
+        UniqueConstraint(
+            "owner_user_id",
+            "company_id",
+            "quarter",
+            "year",
+            name="uq_owner_company_quarter_year",
+        ),
     )
 
 
@@ -95,11 +103,17 @@ class VectorIndex(Base):
     __tablename__ = "vector_indices"
 
     id = Column(Integer, primary_key=True, index=True)
-    company_id = Column(Integer, ForeignKey("companies.id"), unique=True, nullable=False, index=True)
+    owner_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    company_id = Column(Integer, ForeignKey("companies.id"), nullable=False, index=True)
     index_path = Column(String(500), nullable=False)
     chunk_count = Column(Integer, default=0)
     embedding_model = Column(String(255), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    company = relationship("Company", back_populates="vector_indices")
+    owner = relationship("User", back_populates="vector_indices")
+    company = relationship("Company")
+
+    __table_args__ = (
+        UniqueConstraint("owner_user_id", "company_id", name="uq_owner_company_vector_index"),
+    )
